@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Link FarCath RSDK</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    .link-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .link-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    .avatar-ring {
+      background: conic-gradient(from 0deg, #6366f1, #a855f7, #ec4899, #f43f5e, #6366f1);
+      padding: 3px;
+      border-radius: 50%;
+    }
+    .fade-in {
+      animation: fadeUp 0.5s ease forwards;
+      opacity: 0;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 50;
+    }
+    .modal-backdrop {
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+    }
+    .icon-option {
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .icon-option:hover, .icon-option.selected {
+      background: rgba(160,130,109,0.15);
+      color: #a0826d;
+    }
+    .delete-confirm {
+      animation: fadeUp 0.2s ease forwards;
+    }
+    .toast {
+      animation: toastIn 0.3s ease forwards;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    body { box-sizing: border-box; }
+  </style>
+</head>
+<body class="h-full overflow-auto" style="background: #faf6f1; font-family: 'Outfit', sans-serif;">
+  <div class="grain-overlay"></div>
+
+  <!-- PIN Login Screen -->
+  <div id="pin-screen" class="w-full h-full flex flex-col items-center justify-center" style="background: linear-gradient(135deg, #faf6f1 0%, #f5ede6 35%, #ece4dd 100%);">
+    <div class="w-full max-w-sm px-5">
+      <div class="text-center mb-12">
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center" style="background: #a0826d;">
+          <i data-lucide="lock" style="width:40px;height:40px;color:#fff;"></i>
+        </div>
+        <h1 class="text-2xl font-bold mb-2" style="color: #3d3d3d; font-family: 'Sora', sans-serif;">Link FarCath</h1>
+        <p style="color: #8b7355;">Masukkan PIN untuk lanjut</p>
+      </div>
+      <div class="mb-8">
+        <div id="pin-display" class="flex justify-center gap-3 mb-6">
+          <div class="pin-dot w-4 h-4 rounded-full" style="background: #d4c4b8;"></div>
+          <div class="pin-dot w-4 h-4 rounded-full" style="background: #d4c4b8;"></div>
+          <div class="pin-dot w-4 h-4 rounded-full" style="background: #d4c4b8;"></div>
+          <div class="pin-dot w-4 h-4 rounded-full" style="background: #d4c4b8;"></div>
+        </div>
+        <input id="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="0000" class="w-full px-4 py-3 rounded-xl text-center text-2xl tracking-widest outline-none transition-all focus:ring-2" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5; --tw-ring-color: #a0826d; letter-spacing: 0.5em;">
+      </div>
+      <div id="pin-error" class="hidden text-center mb-4 text-sm font-medium" style="color: #ef4444;">
+        PIN salah, coba lagi
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <button onclick="addPin('1')" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">1</button>
+        <button onclick="addPin('2')" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">2</button>
+        <button onclick="addPin('3')" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">3</button>
+
+        <button onclick="addPin('4')" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">4</button>
+        <button onclick="addPin('5')" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">5</button>
+        <button onclick="addPin('6')" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">6</button>
+
+        <button onclick="addPin('7')" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">7</button>
+        <button onclick="addPin('8')" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">8</button>
+        <button onclick="addPin('9')" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">9</button>
+
+        <button onclick="addPin('0')" class="col-span-2 pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #3d3d3d; border: 1px solid #e8ddd5;">0</button>
+        <button onclick="deletePin()" class="pin-btn py-4 rounded-xl font-semibold transition-all" style="background: #f0e8df; color: #8b7355; border: 1px solid #e8ddd5;">
+          <i data-lucide="delete" style="width:20px;height:20px;margin:auto;"></i>
+        </button>
+      </div>
+      <p class="text-center text-xs mt-6" style="color: #8b735566;">PIN Default: 1234</p>
+    </div>
+  </div>
+
+  <!-- Main app -->
+  <div id="app-wrapper" class="hidden w-full h-full flex flex-col items-center" style="background: linear-gradient(135deg, #faf6f1 0%, #f5ede6 35%, #ece4dd 100%);">
+    <!-- Profile Section -->
+    <div class="w-full max-w-2xl mx-auto px-5 pt-12 pb-4 fade-in" style="animation-delay: 0.1s;">
+      <div class="flex items-center gap-6">
+        <div class="avatar-ring w-28 h-28 flex-shrink-0">
+          <div class="w-full h-full rounded-full flex items-center justify-center text-3xl font-bold" style="background: #e8ddd5; color: #8b7355;">
+            <span id="avatar-initials">RSDK</span>
+          </div>
+        </div>
+        <div>
+          <h1 id="display-name" class="text-2xl font-bold mb-1" style="color: #3d3d3d; font-family: 'Sora', sans-serif;">Link FarCath RSDK</h1>
+          <h2 id="subtitle-text" class="text-sm font-medium mb-2" style="color: #a0826d; font-family: 'Sora', sans-serif;">Kumpulan Link Farmasi</h2>
+          <p id="bio-text" class="text-sm" style="color: #8b7355;">Semua Link Farmasi CathLab ada disini </p>
+        </div>
+      </div>
+    </div>
+    <!-- Links Container -->
+    <div class="w-full max-w-md mx-auto px-5 pb-6">
+      <div id="links-list" class="space-y-3 mb-6 fade-in" style="animation-delay: 0.25s;"></div>
+      <!-- Add Link Button -->
+      <button id="add-link-btn" onclick="openModal()" class="w-full py-3.5 rounded-2xl border-2 border-dashed flex items-center justify-center gap-2 text-sm font-medium transition-all hover:border-solid fade-in" style="border-color: #d4c4b8; color: #8b7355; background: transparent; animation-delay: 0.35s;">
+        <i data-lucide="plus" style="width:18px;height:18px;"></i> Tambah Link
+      </button>
+    </div>
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden w-full max-w-md mx-auto px-5 py-12 text-center fade-in">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style="background: #e8ddd5;">
+        <i data-lucide="link" style="width:28px;height:28px;color:#a0826d;"></i>
+      </div>
+      <p class="font-medium mb-1" style="color: #3d3d3d;">Belum ada link</p>
+      <p class="text-sm" style="color: #8b7355;">Klik tombol di atas untuk menambahkan link pertamamu</p>
+    </div>
+    <!-- Footer -->
+    <div class="mt-auto w-full py-6 text-center fade-in" style="animation-delay: 0.4s;">
+      <p id="page-title-footer" class="text-xs" style="color: #8b735566;">Link FarCath</p>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div id="modal" class="hidden fixed inset-0 z-40 modal-backdrop flex items-end sm:items-center justify-center">
+    <div class="w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 relative" style="background: #f0e8df; border: 1px solid #e8ddd5;">
+      <div class="flex items-center justify-between mb-6">
+        <h2 id="modal-title" class="text-lg font-semibold" style="color: #3d3d3d;">Tambah Link</h2>
+        <button onclick="closeModal()" class="p-1.5 rounded-lg transition-colors" style="color: #8b7355;" onmouseover="this.style.background='#e8ddd5'" onmouseout="this.style.background='transparent'">
+          <i data-lucide="x" style="width:20px;height:20px;"></i>
+        </button>
+      </div>
+      <form id="link-form" onsubmit="handleSubmit(event)">
+        <input type="hidden" id="edit-id" value="" />
+        <div class="mb-4">
+          <label for="link-title" class="block text-xs font-medium mb-1.5" style="color: #8b7355;">Judul</label>
+          <input id="link-title" type="text" required placeholder="Contoh: Portfolio" class="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all focus:ring-2" style="background: #faf6f1; color: #3d3d3d; border: 1px solid #e8ddd5; --tw-ring-color: #a0826d;" />
+        </div>
+        <div class="mb-4">
+          <label for="link-url" class="block text-xs font-medium mb-1.5" style="color: #8b7355;">URL</label>
+          <input id="link-url" type="url" required placeholder="https://..." class="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all focus:ring-2" style="background: #faf6f1; color: #3d3d3d; border: 1px solid #e8ddd5; --tw-ring-color: #a0826d;" />
+        </div>
+        <div class="mb-4">
+          <label for="link-group" class="block text-xs font-medium mb-1.5" style="color: #8b7355;">Kumpulan</label>
+          <input id="link-group" type="text" placeholder="Misal: Kumpulan A" class="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all focus:ring-2" style="background: #faf6f1; color: #3d3d3d; border: 1px solid #e8ddd5; --tw-ring-color: #a0826d;" />
+        </div>
+        <div class="mb-5">
+          <label class="block text-xs font-medium mb-2" style="color: #8b7355;">Ikon</label>
+          <div id="icon-grid" class="grid grid-cols-8 gap-1.5"></div>
+        </div>
+        <button id="submit-btn" type="submit" class="w-full py-3 rounded-xl text-sm font-semibold transition-all" style="background: #a0826d; color: #fff;">
+          Simpan
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    query,
+    orderBy,
+    onSnapshot,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    doc,
+    setDoc
+  } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAZd6TXu4O1m2ELQrc5h2iG5bsPl2ojalY",
+    authDomain: "linknya-farmasi-cath.firebaseapp.com",
+    projectId: "linknya-farmasi-cath",
+    storageBucket: "linknya-farmasi-cath.firebasestorage.app",
+    messagingSenderId: "480135086772",
+    appId: "1:480135086772:web:f3bd3fe779c27e04af0de1",
+    measurementId: "G-QG17ZXLEEN"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const linksCollection = collection(db, "links");
+  const linksQuery = query(linksCollection, orderBy("order", "asc"));
+
+  // PIN System
+  const CORRECT_PIN = '1234';
+  let currentPin = '';
+  let isAuthenticated = false;
+
+  function addPin(digit) {
+    if (currentPin.length < 4) {
+      currentPin += digit;
+      updatePinDisplay();
+      if (currentPin.length === 4) {
+        setTimeout(checkPin, 300);
+      }
+    }
+  }
+
+  function deletePin() {
+    currentPin = currentPin.slice(0, -1);
+    updatePinDisplay();
+    document.getElementById('pin-error').classList.add('hidden');
+  }
+
+  function updatePinDisplay() {
+    const dots = document.querySelectorAll('.pin-dot');
+    dots.forEach((dot, i) => {
+      dot.style.background = i < currentPin.length ? '#a0826d' : '#d4c4b8';
+    });
+    document.getElementById('pin-input').value = currentPin;
+  }
+
+  function checkPin() {
+    if (currentPin === CORRECT_PIN) {
+      isAuthenticated = true;
+      document.getElementById('pin-screen').classList.add('hidden');
+      document.getElementById('app-wrapper').classList.remove('hidden');
+      startRealtimeListener();
+    } else {
+      document.getElementById('pin-error').classList.remove('hidden');
+      currentPin = '';
+      updatePinDisplay();
+      setTimeout(() => {
+        document.getElementById('pin-input').value = '';
+      }, 500);
+    }
+  }
+
+  // Icons array
+  const ICONS = [
+    'globe','instagram','twitter','youtube','github','linkedin','mail','phone',
+    'shopping-bag','music','camera','coffee','book-open','map-pin','heart','star',
+    'zap','code','palette','film','headphones','mic','gift','briefcase'
+  ];
+
+  let allLinks = [];
+  let selectedIcon = 'globe';
+  let editingRecord = null;
+
+  let currentConfig = {
+    display_name: "Link FarCath",
+    subtitle_text: "Your creative corner",
+    bio_text: "Semua link penting ada di sini ✨",
+    page_title: "Link FarCath",
+    background_color: "#faf6f1",
+    surface_color: "#f0e8df",
+    text_color: "#3d3d3d",
+    primary_action_color: "#a0826d",
+    secondary_action_color: "#8b7355",
+    font_family: "Outfit",
+    font_size: 14
+  };
+
+  function startRealtimeListener() {
+    onSnapshot(linksQuery, (snapshot) => {
+      const links = [];
+      snapshot.forEach(docSnap => {
+        links.push({ __backendId: docSnap.id, ...docSnap.data() });
+      });
+      allLinks = links;
+      renderLinks(links, currentConfig);
+    });
+  }
+
+  function renderLinks(links, config) {
+    const c = key => config[key] || "";
+    const container = document.getElementById('links-list');
+    const empty = document.getElementById('empty-state');
+
+    if (!links.length) {
+      container.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    const surface = c('surface_color');
+    const text = c('text_color');
+    const primary = c('primary_action_color');
+    const secondary = c('secondary_action_color');
+    const size = c('font_size');
+
+    container.innerHTML = '';
+
+    // Group links by group property (default 'Umum')
+    const groups = {};
+    links.forEach(link => {
+      const g = link.group || 'Umum';
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(link);
+    });
+
+    Object.keys(groups).forEach((groupName, gi) => {
+      const groupHeader = document.createElement('h3');
+      groupHeader.textContent = groupName;
+      groupHeader.style.color = primary;
+      groupHeader.style.fontWeight = '600';
+      groupHeader.style.marginTop = gi === 0 ? '0' : '1.5rem';
+      container.appendChild(groupHeader);
+
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'space-y-3 mb-6 fade-in';
+      groupDiv.style.animationDelay = `${0.25 + gi * 0.15}s`;
+      container.appendChild(groupDiv);
+
+      groups[groupName].forEach(link => {
+        const id = link.__backendId;
+        const el = document.createElement('div');
+        el.dataset.linkId = id;
+        el.className = 'link-card rounded-2xl p-4 flex items-center gap-3.5 relative';
+        el.style.cssText = `border:1px solid #e8ddd5dd; cursor:pointer; background:${surface}99;`;
+        el.innerHTML = `
+          <div class="link-icon w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style="background:${primary}22;">
+            <i data-lucide="${link.icon || 'globe'}" style="width:20px;height:20px;color:${primary};"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="link-title font-semibold truncate" style="color:${text};font-size:${size}px;">
+              ${link.title}
+            </div>
+            <div class="link-url text-xs truncate mt-0.5" style="color:${secondary};font-size:${size * 0.85}px;">
+              ${link.url}
+            </div>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button class="edit-btn p-2 rounded-lg transition-colors" title="Edit" style="color:${secondary}"><i data-lucide="edit" style="width:15px;height:15px;"></i></button>
+            <button class="del-btn p-2 rounded-lg transition-colors" title="Hapus" style="color:${secondary}"><i data-lucide="trash-2" style="width:15px;height:15px;"></i></button>
+          </div>
+          <div class="confirm-del hidden absolute inset-0 rounded-2xl flex items-center justify-center gap-3 delete-confirm" style="background:${surface}ee;backdrop-filter:blur(4px);">
+            <span style="color:${text};font-size:${size}px;">Hapus link ini?</span>
+            <button class="yes-del px-4 py-1.5 rounded-lg text-xs font-semibold" style="background:#ef4444;color:#fff;">Hapus</button>
+            <button class="no-del px-4 py-1.5 rounded-lg text-xs font-semibold" style="background:${surface};color:${text};border:1px solid ${secondary}33;">Batal</button>
+          </div>
+        `;
+        el.querySelector('.link-icon').addEventListener('click', e => { e.stopPropagation(); window.open(ensureUrl(link.url), '_blank', 'noopener,noreferrer'); });
+        el.querySelector('.link-title').addEventListener('click', e => { e.stopPropagation(); window.open(ensureUrl(link.url), '_blank', 'noopener,noreferrer'); });
+        el.querySelector('.link-url').addEventListener('click', e => { e.stopPropagation(); window.open(ensureUrl(link.url), '_blank', 'noopener,noreferrer'); });
+        el.querySelector('.edit-btn').addEventListener('click', e => { e.stopPropagation(); openEditModal(link); });
+        el.querySelector('.del-btn').addEventListener('click', e => { e.stopPropagation(); el.querySelector('.confirm-del').classList.remove('hidden'); });
+        el.querySelector('.yes-del').addEventListener('click', async e => { e.stopPropagation(); await deleteLink(link); });
+        el.querySelector('.no-del').addEventListener('click', e => { e.stopPropagation(); el.querySelector('.confirm-del').classList.add('hidden'); });
+
+        groupDiv.appendChild(el);
+      });
+    });
+
+    lucide.createIcons();
+  }
+
+  function ensureUrl(url) {
+    if (!url) return '#';
+    return url.startsWith('http') ? url : 'https://' + url;
+  }
+
+  function buildIconGrid() {
+    const grid = document.getElementById('icon-grid');
+    grid.innerHTML = '';
+    ICONS.forEach(name => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `icon-option w-9 h-9 rounded-lg flex items-center justify-center ${name === selectedIcon ? 'selected' : ''}`;
+      btn.style.color = '#8b7355';
+      btn.innerHTML = `<i data-lucide="${name}" style="width:16px;height:16px;"></i>`;
+      btn.addEventListener('click', () => {
+        grid.querySelectorAll('.icon-option').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedIcon = name;
+      });
+      grid.appendChild(btn);
+    });
+    lucide.createIcons();
+  }
+
+  function openModal() {
+    editingRecord = null;
+    document.getElementById('edit-id').value = '';
+    document.getElementById('link-title').value = '';
+    document.getElementById('link-url').value = '';
+    document.getElementById('link-group').value = '';
+    document.getElementById('modal-title').textContent = 'Tambah Link';
+    document.getElementById('submit-btn').textContent = 'Simpan';
+    selectedIcon = 'globe';
+    buildIconGrid();
+    document.getElementById('modal').classList.remove('hidden');
+  }
+
+  function openEditModal(record) {
+    editingRecord = record;
+    document.getElementById('edit-id').value = record.__backendId || '';
+    document.getElementById('link-title').value = record.title;
+    document.getElementById('link-url').value = record.url;
+    document.getElementById('link-group').value = record.group || '';
+    document.getElementById('modal-title').textContent = 'Edit Link';
+    document.getElementById('submit-btn').textContent = 'Perbarui';
+    selectedIcon = record.icon || 'globe';
+    buildIconGrid();
+    document.getElementById('modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const title = document.getElementById('link-title').value.trim();
+    const url = document.getElementById('link-url').value.trim();
+    const group = document.getElementById('link-group').value.trim();
+    if (!title || !url) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+    btn.style.opacity = '0.6';
+
+    try {
+      if (editingRecord) {
+        const ref = doc(db, 'links', editingRecord.__backendId);
+        await updateDoc(ref, {
+          title,
+          url,
+          icon: selectedIcon,
+          group: group || '',
+          order: editingRecord.order || Date.now()
+        });
+      } else {
+        if (allLinks.length >= 999) {
+          showToast('Batas maksimum 999 link tercapai', true);
+          btn.disabled = false;
+          btn.textContent = 'Simpan';
+          btn.style.opacity = '1';
+          return;
+        }
+        await addDoc(linksCollection, {
+          title,
+          url,
+          icon: selectedIcon,
+          group: group || '',
+          order: Date.now()
+        });
+      }
+      closeModal();
+      showToast(editingRecord ? 'Link diperbarui!' : 'Link ditambahkan!');
+    } catch (e) {
+      console.error('Error menyimpan link:', e);
+      showToast('Gagal menyimpan. Coba lagi.', true);
+    }
+
+    btn.disabled = false;
+    btn.textContent = editingRecord ? 'Perbarui' : 'Simpan';
+    btn.style.opacity = '1';
+  }
+
+  async function deleteLink(record) {
+    try {
+      const ref = doc(db, 'links', record.__backendId);
+      await deleteDoc(ref);
+      showToast('Link dihapus');
+    } catch (e) {
+      console.error('Error menghapus link:', e);
+      showToast('Gagal menghapus. Coba lagi.', true);
+    }
+  }
+
+  function showToast(msg, isError = false) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast px-5 py-3 rounded-xl text-sm font-medium mb-2';
+    toast.style.cssText = `background:${isError ? '#ef4444' : '#6366f1'};color:#fff;`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('modal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+
+  lucide.createIcons();
+
+  window.addPin = addPin;
+  window.deletePin = deletePin;
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+  window.handleSubmit = handleSubmit;
+  window.openEditModal = openEditModal;
+</script>
+
+</body>
+</html>
