@@ -30,6 +30,24 @@
       background-color: transparent !important;
       overflow: auto;
     }
+#app-wrapper {
+  max-width: 95vw;
+  margin-left: auto;
+  margin-right: auto;
+  gap: 1.5rem;
+}
+
+#app-wrapper > aside {
+  width: 28vw;
+  min-width: 300px;
+  max-width: 450px;
+}
+
+#app-wrapper > main {
+  width: 66vw;
+  min-width: 500px;
+  max-width: calc(100vw - 300px - 3rem);
+}
 
     /* To ensure readable text on image, apply semi-transparent panel backgrounds */
     #pin-screen > div, #app-wrapper > aside, #app-wrapper > main {
